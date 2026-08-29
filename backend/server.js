@@ -8,12 +8,10 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect('mongodb://127.0.0.1:27017/flo_inventory_db', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB veritabanı bağlantısı başarılı.'))
-.catch((err) => console.error('Veritabanı bağlantı hatası:', err));
+
+mongoose.connect('mongodb://127.0.0.1:27017/flo_inventory_db')
+  .then(() => console.log('MongoDB veritabanı bağlantısı başarılı.'))
+  .catch((err) => console.log('MongoDB bağlantı uyarısı (Local):', err.message));
 
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const salesRoutes = require('./routes/salesRoutes');
