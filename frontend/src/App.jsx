@@ -11,8 +11,11 @@ import {
   Truck,
   Leaf,
   Globe,
-  Zap,
-  Award
+  Award,
+  BarChart3,
+  X,
+  TrendingUp,
+  Activity
 } from 'lucide-react';
 
 export default function App() {
@@ -21,6 +24,7 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [notification, setNotification] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const defaultMock = [
     {
@@ -32,7 +36,9 @@ export default function App() {
       predictedDemand: 45,
       suggestedReplenishment: 37,
       esgMetrics: { carbonSavedKg: 14.2, ecoRoute: 'Elektrikli Filo / Yakın Depo' },
-      supplyChain: { agilityScore: 94, logisticsStatus: 'Yeşil Rota Aktif' }
+      supplyChain: { agilityScore: 94, logisticsStatus: 'Yeşil Rota Aktif' },
+      historicalTrend: [12, 18, 25, 30, 42, 45],
+      turnoverRate: '4.8x'
     },
     {
       _id: 'inv_02',
@@ -43,7 +49,9 @@ export default function App() {
       predictedDemand: 50,
       suggestedReplenishment: 0,
       esgMetrics: { carbonSavedKg: 28.5, ecoRoute: 'Optimum Konsolidasyon' },
-      supplyChain: { agilityScore: 88, logisticsStatus: 'Sınır Ötesi Stabil' }
+      supplyChain: { agilityScore: 88, logisticsStatus: 'Sınır Ötesi Stabil' },
+      historicalTrend: [35, 38, 40, 44, 48, 50],
+      turnoverRate: '5.2x'
     },
     {
       _id: 'inv_03',
@@ -54,7 +62,9 @@ export default function App() {
       predictedDemand: 32,
       suggestedReplenishment: 27,
       esgMetrics: { carbonSavedKg: 19.8, ecoRoute: 'Bölgesel Eko-Transfer' },
-      supplyChain: { agilityScore: 96, logisticsStatus: 'Düşük Emisyonlu Sevkiyat' }
+      supplyChain: { agilityScore: 96, logisticsStatus: 'Düşük Emisyonlu Sevkiyat' },
+      historicalTrend: [8, 14, 19, 22, 28, 32],
+      turnoverRate: '3.9x'
     },
     {
       _id: 'inv_04',
@@ -65,7 +75,9 @@ export default function App() {
       predictedDemand: 30,
       suggestedReplenishment: 0,
       esgMetrics: { carbonSavedKg: 32.1, ecoRoute: 'Merkezi Raylı Sistem' },
-      supplyChain: { agilityScore: 82, logisticsStatus: 'Uluslararası Yeşil Hat' }
+      supplyChain: { agilityScore: 82, logisticsStatus: 'Uluslararası Yeşil Hat' },
+      historicalTrend: [15, 18, 20, 24, 27, 30],
+      turnoverRate: '4.1x'
     }
   ];
 
@@ -81,7 +93,9 @@ export default function App() {
           suggestedReplenishment: item.stockQuantity <= item.criticalThreshold ? (item.criticalThreshold * 2) - item.stockQuantity + 10 : 0,
           esgMetrics: defaultMock[idx % defaultMock.length].esgMetrics,
           supplyChain: defaultMock[idx % defaultMock.length].supplyChain,
-          store: { ...item.store, region: defaultMock[idx % defaultMock.length].store.region, channel: defaultMock[idx % defaultMock.length].store.channel }
+          store: { ...item.store, region: defaultMock[idx % defaultMock.length].store.region, channel: defaultMock[idx % defaultMock.length].store.channel },
+          historicalTrend: defaultMock[idx % defaultMock.length].historicalTrend,
+          turnoverRate: defaultMock[idx % defaultMock.length].turnoverRate
         }));
         setInventory(enhanced);
       } else {
@@ -116,6 +130,14 @@ export default function App() {
       message: `${item.store.city} mağazası için ${item.esgMetrics.ecoRoute} rotasıyla +${qty} adet ürün transferi başlatıldı (${item.esgMetrics.carbonSavedKg} kg CO2 tasarrufu).`
     });
 
+    if (selectedProduct && selectedProduct._id === item._id) {
+      setSelectedProduct(prev => ({
+        ...prev,
+        stockQuantity: prev.stockQuantity + qty,
+        suggestedReplenishment: 0
+      }));
+    }
+
     setTimeout(() => {
       setNotification(null);
     }, 4500);
@@ -136,6 +158,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-6 font-sans">
+      {/* Toast Notification */}
       {notification && (
         <div className="fixed top-5 right-5 z-50 flex items-center gap-3 bg-emerald-950 border border-emerald-500/50 text-emerald-200 px-5 py-4 rounded-xl shadow-2xl animate-bounce">
           <Leaf className="text-emerald-400" size={24} />
@@ -151,9 +174,9 @@ export default function App() {
         <div>
           <div className="flex items-center gap-2">
             <span className="bg-orange-600 text-white font-black px-2.5 py-1 rounded text-lg tracking-wider">FLO</span>
-            <h1 className="text-xl font-bold tracking-tight text-white">Sürdürülebilir Stok & Yeşil Lojistik Paneli</h1>
+            <h1 className="text-xl font-bold tracking-tight text-white">Stok, Talep Tahmin & Trend Analiz Paneli</h1>
           </div>
-          <p className="text-slate-400 text-sm mt-1">ESG Standartları, Düşük Karbon Salımlı Rota ve Çevik İkmal Modeli</p>
+          <p className="text-slate-400 text-sm mt-1">Geçmiş Satış Trendleri, Devir Hızı ve Yapay Zeka Destekli İkmal</p>
         </div>
         <button 
           onClick={fetchInventory}
@@ -207,14 +230,14 @@ export default function App() {
 
         <div className="bg-slate-800/80 border border-amber-500/30 p-5 rounded-xl flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Kurumsal ESG Başarısı</p>
-            <h3 className="text-2xl font-bold text-amber-400 mt-1">12 Ödül</h3>
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Ortalama Devir Hızı</p>
+            <h3 className="text-2xl font-bold text-amber-400 mt-1">4.5x</h3>
             <span className="text-amber-300 text-xs flex items-center mt-1">
-              <Award size={14} className="mr-0.5" /> 2025-2026 Dönemi
+              <Activity size={14} className="mr-0.5" /> Yüksek Likidite
             </span>
           </div>
           <div className="bg-amber-500/10 p-3 rounded-lg text-amber-400">
-            <Award size={24} />
+            <BarChart3 size={24} />
           </div>
         </div>
       </div>
@@ -259,9 +282,9 @@ export default function App() {
                 <th className="py-3.5 px-4 font-semibold">Bölge & Kanal</th>
                 <th className="py-3.5 px-4 font-semibold">Mağaza Lokasyonu</th>
                 <th className="py-3.5 px-4 font-semibold text-center">Stok / Eşik</th>
-                <th className="py-3.5 px-4 font-semibold text-center">Yeşil Lojistik & ESG</th>
+                <th className="py-3.5 px-4 font-semibold text-center">Devir Hızı</th>
                 <th className="py-3.5 px-4 font-semibold text-center">Tahmini Talep</th>
-                <th className="py-3.5 px-4 font-semibold text-center">İkmal Aksiyonu</th>
+                <th className="py-3.5 px-4 font-semibold text-center">İşlem & Analiz</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/50 text-sm">
@@ -291,14 +314,9 @@ export default function App() {
                       <span className="text-xs text-slate-400 block font-normal mt-0.5">Eşik: {item.criticalThreshold}</span>
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <div className="inline-flex flex-col items-center">
-                        <span className="text-xs text-emerald-400 font-medium flex items-center gap-1">
-                          <Leaf size={12} /> {item.esgMetrics?.carbonSavedKg} kg CO₂ Tasarruf
-                        </span>
-                        <span className="text-xs text-slate-400 mt-0.5">
-                          {item.esgMetrics?.ecoRoute}
-                        </span>
-                      </div>
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold bg-slate-900 border border-slate-700 px-2 py-1 rounded text-amber-300">
+                        <TrendingUp size={12} /> {item.turnoverRate}
+                      </span>
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className="inline-flex items-center gap-1 text-slate-200 font-medium bg-slate-900/60 px-2.5 py-1 rounded border border-slate-700">
@@ -307,19 +325,28 @@ export default function App() {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-center">
-                      {isCritical ? (
+                      <div className="flex items-center justify-center gap-2">
                         <button
-                          onClick={() => handleAutoReplenish(item)}
-                          className="inline-flex items-center gap-1.5 bg-orange-600 hover:bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition transform active:scale-95"
+                          onClick={() => setSelectedProduct(item)}
+                          className="bg-slate-700 hover:bg-slate-600 text-slate-200 p-1.5 rounded-lg text-xs font-semibold transition"
+                          title="Trend Analizi İncele"
                         >
-                          <Truck size={14} />
-                          +{item.suggestedReplenishment} Eko-İkmal
+                          <BarChart3 size={15} />
                         </button>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">
-                          <CheckCircle2 size={12} /> Yeşil Rota Tamam
-                        </span>
-                      )}
+                        {isCritical ? (
+                          <button
+                            onClick={() => handleAutoReplenish(item)}
+                            className="inline-flex items-center gap-1.5 bg-orange-600 hover:bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition transform active:scale-95"
+                          >
+                            <Truck size={14} />
+                            +{item.suggestedReplenishment} İkmal
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">
+                            <CheckCircle2 size={12} /> Optimum
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -328,6 +355,71 @@ export default function App() {
           </table>
         </div>
       </div>
+
+      {/* Trend Analysis Modal */}
+      {selectedProduct && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+            <button 
+              onClick={() => setSelectedProduct(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg bg-slate-700/50 transition"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="flex items-center gap-2 text-orange-400 mb-1">
+              <BarChart3 size={18} />
+              <h3 className="text-xs font-bold uppercase tracking-wider">Talep ve Satış Trendi</h3>
+            </div>
+            <h2 className="text-lg font-bold text-white">{selectedProduct.product.title}</h2>
+            <p className="text-xs text-slate-400 mt-0.5">{selectedProduct.store.storeName} ({selectedProduct.store.city})</p>
+
+            {/* Simulated Chart Bars */}
+            <div className="mt-6 bg-slate-900/80 border border-slate-800 p-4 rounded-xl">
+              <p className="text-xs text-slate-400 mb-3 flex items-center justify-between">
+                <span>Son 6 Aylık Satış & Talep Eğilimi (Adet)</span>
+                <span className="text-emerald-400 font-semibold">Büyüme: +18%</span>
+              </p>
+              <div className="flex items-end justify-between gap-3 h-32 pt-4 px-2">
+                {selectedProduct.historicalTrend.map((val, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+                    <span className="text-[10px] text-slate-400 font-mono">{val}</span>
+                    <div 
+                      style={{ height: `${(val / 55) * 100}%` }}
+                      className="w-full bg-gradient-to-t from-orange-600 to-amber-400 rounded-t transition-all duration-500"
+                    />
+                    <span className="text-[10px] text-slate-500">Ay {i + 1}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                <span className="text-[11px] text-slate-400 block">Stok Devir Hızı</span>
+                <span className="text-base font-bold text-amber-300 mt-0.5 block">{selectedProduct.turnoverRate}</span>
+              </div>
+              <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                <span className="text-[11px] text-slate-400 block">AI Tahmini Talep</span>
+                <span className="text-base font-bold text-orange-400 mt-0.5 block">{selectedProduct.predictedDemand} Adet</span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              {selectedProduct.stockQuantity <= selectedProduct.criticalThreshold && (
+                <button
+                  onClick={() => handleAutoReplenish(selectedProduct)}
+                  className="w-full inline-flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white py-2.5 rounded-xl text-xs font-semibold shadow transition active:scale-95"
+                >
+                  <Truck size={14} />
+                  +{selectedProduct.suggestedReplenishment} Adet İkmal Başlat
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
