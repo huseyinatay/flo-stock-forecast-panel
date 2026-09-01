@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   Package, 
   AlertTriangle, 
-  TrendingUp, 
   Search, 
   RefreshCw,
   ArrowDownRight,
@@ -10,10 +9,10 @@ import {
   Sparkles,
   CheckCircle2,
   Truck,
-  ShoppingCart,
+  Leaf,
   Globe,
   Zap,
-  Target
+  Award
 } from 'lucide-react';
 
 export default function App() {
@@ -32,8 +31,8 @@ export default function App() {
       criticalThreshold: 15,
       predictedDemand: 45,
       suggestedReplenishment: 37,
-      crmMetrics: { abandonedCarts: 18, activeCouponUsers: 42, rfmSegment: 'Şampiyonlar' },
-      supplyChain: { agilityScore: 94, logisticsStatus: 'Hızlı Teslimat (Yurt İçi)' }
+      esgMetrics: { carbonSavedKg: 14.2, ecoRoute: 'Elektrikli Filo / Yakın Depo' },
+      supplyChain: { agilityScore: 94, logisticsStatus: 'Yeşil Rota Aktif' }
     },
     {
       _id: 'inv_02',
@@ -43,7 +42,7 @@ export default function App() {
       criticalThreshold: 15,
       predictedDemand: 50,
       suggestedReplenishment: 0,
-      crmMetrics: { abandonedCarts: 6, activeCouponUsers: 15, rfmSegment: 'Sadıklar' },
+      esgMetrics: { carbonSavedKg: 28.5, ecoRoute: 'Optimum Konsolidasyon' },
       supplyChain: { agilityScore: 88, logisticsStatus: 'Sınır Ötesi Stabil' }
     },
     {
@@ -54,8 +53,8 @@ export default function App() {
       criticalThreshold: 12,
       predictedDemand: 32,
       suggestedReplenishment: 27,
-      crmMetrics: { abandonedCarts: 24, activeCouponUsers: 55, rfmSegment: 'Şampiyonlar' },
-      supplyChain: { agilityScore: 96, logisticsStatus: 'Depodan Çıkışa Hazır' }
+      esgMetrics: { carbonSavedKg: 19.8, ecoRoute: 'Bölgesel Eko-Transfer' },
+      supplyChain: { agilityScore: 96, logisticsStatus: 'Düşük Emisyonlu Sevkiyat' }
     },
     {
       _id: 'inv_04',
@@ -65,8 +64,8 @@ export default function App() {
       criticalThreshold: 10,
       predictedDemand: 30,
       suggestedReplenishment: 0,
-      crmMetrics: { abandonedCarts: 4, activeCouponUsers: 12, rfmSegment: 'Riskliler' },
-      supplyChain: { agilityScore: 82, logisticsStatus: 'Uluslararası Transfer' }
+      esgMetrics: { carbonSavedKg: 32.1, ecoRoute: 'Merkezi Raylı Sistem' },
+      supplyChain: { agilityScore: 82, logisticsStatus: 'Uluslararası Yeşil Hat' }
     }
   ];
 
@@ -80,7 +79,7 @@ export default function App() {
           ...item,
           predictedDemand: item.stockQuantity <= item.criticalThreshold ? item.stockQuantity + 30 : item.stockQuantity + 5,
           suggestedReplenishment: item.stockQuantity <= item.criticalThreshold ? (item.criticalThreshold * 2) - item.stockQuantity + 10 : 0,
-          crmMetrics: defaultMock[idx % defaultMock.length].crmMetrics,
+          esgMetrics: defaultMock[idx % defaultMock.length].esgMetrics,
           supplyChain: defaultMock[idx % defaultMock.length].supplyChain,
           store: { ...item.store, region: defaultMock[idx % defaultMock.length].store.region, channel: defaultMock[idx % defaultMock.length].store.channel }
         }));
@@ -113,8 +112,8 @@ export default function App() {
     }));
 
     setNotification({
-      title: 'Çevik Tedarik Zinciri: İkmal Başlatıldı',
-      message: `${item.store.region} - ${item.store.city} bölgesi için stratejik lojistik ağı üzerinden +${qty} adet ${item.product.brand} sevkiyatı onaylandı.`
+      title: 'Yeşil Lojistik & Eko-İkmal Başlatıldı',
+      message: `${item.store.city} mağazası için ${item.esgMetrics.ecoRoute} rotasıyla +${qty} adet ürün transferi başlatıldı (${item.esgMetrics.carbonSavedKg} kg CO2 tasarrufu).`
     });
 
     setTimeout(() => {
@@ -124,7 +123,7 @@ export default function App() {
 
   const totalStock = inventory.reduce((acc, item) => acc + item.stockQuantity, 0);
   const criticalCount = inventory.filter(item => item.stockQuantity <= item.criticalThreshold).length;
-  const eemeaStores = inventory.filter(item => item.store.region === 'EEMEA').length;
+  const totalCarbonSaved = inventory.reduce((acc, item) => acc + (item.esgMetrics?.carbonSavedKg || 0), 0);
 
   const filteredItems = inventory.filter(item => {
     const matchesSearch = item.product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -138,11 +137,11 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-6 font-sans">
       {notification && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-3 bg-indigo-950 border border-indigo-500/50 text-indigo-200 px-5 py-4 rounded-xl shadow-2xl animate-bounce">
-          <Zap className="text-indigo-400" size={24} />
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-3 bg-emerald-950 border border-emerald-500/50 text-emerald-200 px-5 py-4 rounded-xl shadow-2xl animate-bounce">
+          <Leaf className="text-emerald-400" size={24} />
           <div>
             <p className="font-bold text-sm text-white">{notification.title}</p>
-            <p className="text-xs text-indigo-300 mt-0.5">{notification.message}</p>
+            <p className="text-xs text-emerald-300 mt-0.5">{notification.message}</p>
           </div>
         </div>
       )}
@@ -152,9 +151,9 @@ export default function App() {
         <div>
           <div className="flex items-center gap-2">
             <span className="bg-orange-600 text-white font-black px-2.5 py-1 rounded text-lg tracking-wider">FLO</span>
-            <h1 className="text-xl font-bold tracking-tight text-white">Stratejik Planlama & Çevik Tedarik Paneli</h1>
+            <h1 className="text-xl font-bold tracking-tight text-white">Sürdürülebilir Stok & Yeşil Lojistik Paneli</h1>
           </div>
-          <p className="text-slate-400 text-sm mt-1">2030 Küresel EEMEA Vizyonu ve Omnichannel Lojistik Optimizasyonu</p>
+          <p className="text-slate-400 text-sm mt-1">ESG Standartları, Düşük Karbon Salımlı Rota ve Çevik İkmal Modeli</p>
         </div>
         <button 
           onClick={fetchInventory}
@@ -169,23 +168,23 @@ export default function App() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
         <div className="bg-slate-800/80 border border-slate-700/60 p-5 rounded-xl flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Küresel Operasyon Ağı</p>
-            <h3 className="text-2xl font-bold text-white mt-1">30 Ülke</h3>
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Toplam Stok Adedi</p>
+            <h3 className="text-2xl font-bold text-white mt-1">{totalStock}</h3>
             <span className="text-emerald-400 text-xs flex items-center mt-1">
-              <ArrowUpRight size={14} className="mr-0.5" /> Bölgesel Liderlik
+              <ArrowUpRight size={14} className="mr-0.5" /> Envanter Hazır
             </span>
           </div>
           <div className="bg-blue-500/10 p-3 rounded-lg text-blue-400">
-            <Globe size={24} />
+            <Package size={24} />
           </div>
         </div>
 
         <div className="bg-slate-800/80 border border-red-500/30 p-5 rounded-xl flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Tedarik Zinciri Riski</p>
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Kritik Stok Uyarısı</p>
             <h3 className="text-2xl font-bold text-red-400 mt-1">{criticalCount} Ürün</h3>
             <span className="text-red-400 text-xs flex items-center mt-1">
-              <ArrowDownRight size={14} className="mr-0.5" /> Acil Çevik İkmal
+              <ArrowDownRight size={14} className="mr-0.5" /> Acil Eko-İkmal
             </span>
           </div>
           <div className="bg-red-500/10 p-3 rounded-lg text-red-400 animate-pulse">
@@ -193,29 +192,29 @@ export default function App() {
           </div>
         </div>
 
-        <div className="bg-slate-800/80 border border-indigo-500/30 p-5 rounded-xl flex items-center justify-between">
+        <div className="bg-slate-800/80 border border-emerald-500/30 p-5 rounded-xl flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Tedarik Çeviklik Skoru</p>
-            <h3 className="text-2xl font-bold text-indigo-400 mt-1">%94.5</h3>
-            <span className="text-indigo-300 text-xs flex items-center mt-1">
-              <Zap size={14} className="mr-1" /> Veri Destekli Lojistik
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Karbon Tasarrufu (ESG)</p>
+            <h3 className="text-2xl font-bold text-emerald-400 mt-1">{totalCarbonSaved.toFixed(1)} kg CO₂</h3>
+            <span className="text-emerald-300 text-xs flex items-center mt-1">
+              <Leaf size={14} className="mr-1" /> Yeşil Rota Optimizasyonu
             </span>
           </div>
-          <div className="bg-indigo-500/10 p-3 rounded-lg text-indigo-400">
-            <TrendingUp size={24} />
+          <div className="bg-emerald-500/10 p-3 rounded-lg text-emerald-400">
+            <Leaf size={24} />
           </div>
         </div>
 
-        <div className="bg-slate-800/80 border border-orange-500/30 p-5 rounded-xl flex items-center justify-between">
+        <div className="bg-slate-800/80 border border-amber-500/30 p-5 rounded-xl flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">EEMEA Vizyon Hedefi</p>
-            <h3 className="text-2xl font-bold text-orange-400 mt-1">{eemeaStores} Lokasyon</h3>
-            <span className="text-emerald-400 text-xs flex items-center mt-1">
-              <Target size={14} className="mr-0.5" /> 2030 Genişleme Hattı
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Kurumsal ESG Başarısı</p>
+            <h3 className="text-2xl font-bold text-amber-400 mt-1">12 Ödül</h3>
+            <span className="text-amber-300 text-xs flex items-center mt-1">
+              <Award size={14} className="mr-0.5" /> 2025-2026 Dönemi
             </span>
           </div>
-          <div className="bg-orange-500/10 p-3 rounded-lg text-orange-400">
-            <Target size={24} />
+          <div className="bg-amber-500/10 p-3 rounded-lg text-amber-400">
+            <Award size={24} />
           </div>
         </div>
       </div>
@@ -226,7 +225,7 @@ export default function App() {
           <Search size={18} className="absolute left-3 top-2.5 text-slate-400" />
           <input 
             type="text" 
-            placeholder="Ürün, marka, mağaza veya bölge ara (örn: Bakü, EEMEA)..."
+            placeholder="Ürün, mağaza veya bölge ara..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
@@ -250,19 +249,19 @@ export default function App() {
         </div>
       </div>
 
-      {/* Strategic Inventory Table */}
+      {/* Table */}
       <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-900/80 border-b border-slate-700 text-slate-400 text-xs uppercase tracking-wider">
                 <th className="py-3.5 px-4 font-semibold">Ürün Detayı</th>
-                <th className="py-3.5 px-4 font-semibold">Stratejik Bölge / Kanal</th>
+                <th className="py-3.5 px-4 font-semibold">Bölge & Kanal</th>
                 <th className="py-3.5 px-4 font-semibold">Mağaza Lokasyonu</th>
                 <th className="py-3.5 px-4 font-semibold text-center">Stok / Eşik</th>
-                <th className="py-3.5 px-4 font-semibold text-center">Tedarik Çevikliği</th>
+                <th className="py-3.5 px-4 font-semibold text-center">Yeşil Lojistik & ESG</th>
                 <th className="py-3.5 px-4 font-semibold text-center">Tahmini Talep</th>
-                <th className="py-3.5 px-4 font-semibold text-center">Lojistik Aksiyon</th>
+                <th className="py-3.5 px-4 font-semibold text-center">İkmal Aksiyonu</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/50 text-sm">
@@ -293,11 +292,11 @@ export default function App() {
                     </td>
                     <td className="py-3 px-4 text-center">
                       <div className="inline-flex flex-col items-center">
-                        <span className="text-xs text-indigo-400 font-medium flex items-center gap-1">
-                          <Zap size={12} /> Skor: {item.supplyChain.agilityScore}
+                        <span className="text-xs text-emerald-400 font-medium flex items-center gap-1">
+                          <Leaf size={12} /> {item.esgMetrics?.carbonSavedKg} kg CO₂ Tasarruf
                         </span>
                         <span className="text-xs text-slate-400 mt-0.5">
-                          {item.supplyChain.logisticsStatus}
+                          {item.esgMetrics?.ecoRoute}
                         </span>
                       </div>
                     </td>
@@ -314,11 +313,11 @@ export default function App() {
                           className="inline-flex items-center gap-1.5 bg-orange-600 hover:bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition transform active:scale-95"
                         >
                           <Truck size={14} />
-                          +{item.suggestedReplenishment} Çevik İkmal
+                          +{item.suggestedReplenishment} Eko-İkmal
                         </button>
                       ) : (
                         <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">
-                          <CheckCircle2 size={12} /> Lojistik Optimum
+                          <CheckCircle2 size={12} /> Yeşil Rota Tamam
                         </span>
                       )}
                     </td>
