@@ -10,7 +10,10 @@ import {
   ArrowUpRight,
   Sparkles,
   CheckCircle2,
-  Truck
+  Truck,
+  Users,
+  ShoppingCart,
+  Tag
 } from 'lucide-react';
 
 export default function App() {
@@ -27,8 +30,9 @@ export default function App() {
       product: { sku: 'LMB-SNK-2026', title: 'Lumberjack Sport Sneaker', brand: 'Lumberjack', category: 'Ayakkabı', unitPrice: 1899.90 },
       stockQuantity: 8,
       criticalThreshold: 15,
-      predictedDemand: 35,
-      suggestedReplenishment: 27
+      predictedDemand: 45,
+      suggestedReplenishment: 37,
+      crmMetrics: { abandonedCarts: 18, activeCouponUsers: 42, rfmSegment: 'Şampiyonlar' }
     },
     {
       _id: 'inv_02',
@@ -36,8 +40,9 @@ export default function App() {
       product: { sku: 'KNT-RUN-1002', title: 'Kinetix Air Running', brand: 'Kinetix', category: 'Ayakkabı', unitPrice: 1249.90 },
       stockQuantity: 42,
       criticalThreshold: 15,
-      predictedDemand: 45,
-      suggestedReplenishment: 0
+      predictedDemand: 50,
+      suggestedReplenishment: 0,
+      crmMetrics: { abandonedCarts: 6, activeCouponUsers: 15, rfmSegment: 'Sadıklar' }
     },
     {
       _id: 'inv_03',
@@ -45,8 +50,9 @@ export default function App() {
       product: { sku: 'RBK-CLB-900', title: 'Reebok Club C Vintage', brand: 'Reebok', category: 'Ayakkabı', unitPrice: 3499.00 },
       stockQuantity: 5,
       criticalThreshold: 12,
-      predictedDemand: 25,
-      suggestedReplenishment: 20
+      predictedDemand: 32,
+      suggestedReplenishment: 27,
+      crmMetrics: { abandonedCarts: 24, activeCouponUsers: 55, rfmSegment: 'Şampiyonlar' }
     },
     {
       _id: 'inv_04',
@@ -55,7 +61,8 @@ export default function App() {
       stockQuantity: 28,
       criticalThreshold: 10,
       predictedDemand: 30,
-      suggestedReplenishment: 0
+      suggestedReplenishment: 0,
+      crmMetrics: { abandonedCarts: 4, activeCouponUsers: 12, rfmSegment: 'Riskliler' }
     }
   ];
 
@@ -65,11 +72,11 @@ export default function App() {
       const res = await fetch('http://localhost:5000/api/inventory');
       const data = await res.json();
       if (data.success && data.data.length > 0) {
-        // Backend verisine AI tahmin alanlarını ekleyelim
-        const enhanced = data.data.map(item => ({
+        const enhanced = data.data.map((item, idx) => ({
           ...item,
-          predictedDemand: item.stockQuantity <= item.criticalThreshold ? item.stockQuantity + 25 : item.stockQuantity + 5,
-          suggestedReplenishment: item.stockQuantity <= item.criticalThreshold ? (item.criticalThreshold * 2) - item.stockQuantity : 0
+          predictedDemand: item.stockQuantity <= item.criticalThreshold ? item.stockQuantity + 30 : item.stockQuantity + 5,
+          suggestedReplenishment: item.stockQuantity <= item.criticalThreshold ? (item.criticalThreshold * 2) - item.stockQuantity + 10 : 0,
+          crmMetrics: defaultMock[idx % defaultMock.length].crmMetrics
         }));
         setInventory(enhanced);
       } else {
@@ -86,7 +93,6 @@ export default function App() {
     fetchInventory();
   }, []);
 
-  // AI Sipariş Tetikleme Fonksiyonu
   const handleAutoReplenish = (item) => {
     const qty = item.suggestedReplenishment;
     setInventory(prev => prev.map(inv => {
@@ -101,17 +107,18 @@ export default function App() {
     }));
 
     setNotification({
-      title: 'AI Otomatik İkmal Emri Oluşturuldu',
-      message: `${item.store.storeName} için ${qty} adet "${item.product.title}" merkez depodan transfer kuyruğuna eklendi.`
+      title: 'CRM Destekli Akıllı İkmal Emri Verildi',
+      message: `${item.store.storeName} için sepetteki ${item.crmMetrics.abandonedCarts} potansiyel talep hesaplanarak +${qty} adet ikmal emri iletildi.`
     });
 
     setTimeout(() => {
       setNotification(null);
-    }, 4000);
+    }, 4500);
   };
 
   const totalStock = inventory.reduce((acc, item) => acc + item.stockQuantity, 0);
   const criticalCount = inventory.filter(item => item.stockQuantity <= item.criticalThreshold).length;
+  const totalAbandonedCarts = inventory.reduce((acc, item) => acc + (item.crmMetrics?.abandonedCarts || 0), 0);
 
   const filteredItems = inventory.filter(item => {
     const matchesSearch = item.product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -123,7 +130,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-6 font-sans">
-      {/* Toast Notification */}
       {notification && (
         <div className="fixed top-5 right-5 z-50 flex items-center gap-3 bg-emerald-950 border border-emerald-500/50 text-emerald-200 px-5 py-4 rounded-xl shadow-2xl animate-bounce">
           <CheckCircle2 className="text-emerald-400" size={24} />
@@ -141,7 +147,7 @@ export default function App() {
             <span className="bg-orange-600 text-white font-black px-2.5 py-1 rounded text-lg tracking-wider">FLO</span>
             <h1 className="text-xl font-bold tracking-tight text-white">Akıllı Stok ve Talep Tahmin Paneli</h1>
           </div>
-          <p className="text-slate-400 text-sm mt-1">Yapay Zeka Destekli Otomatik İkmal ve Çok Kanallı Sipariş Dağıtımı</p>
+          <p className="text-slate-400 text-sm mt-1">CRM, Sepet Sinyalleri ve RFM Segmentasyonu Destekli Talep Tahmini</p>
         </div>
         <button 
           onClick={fetchInventory}
@@ -159,7 +165,7 @@ export default function App() {
             <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Toplam Stok Adedi</p>
             <h3 className="text-2xl font-bold text-white mt-1">{totalStock}</h3>
             <span className="text-emerald-400 text-xs flex items-center mt-1">
-              <ArrowUpRight size={14} className="mr-0.5" /> Aktif Envanter
+              <ArrowUpRight size={14} className="mr-0.5" /> Envanter Hazır
             </span>
           </div>
           <div className="bg-blue-500/10 p-3 rounded-lg text-blue-400">
@@ -172,7 +178,7 @@ export default function App() {
             <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Kritik Stok Uyarısı</p>
             <h3 className="text-2xl font-bold text-red-400 mt-1">{criticalCount} Ürün</h3>
             <span className="text-red-400 text-xs flex items-center mt-1">
-              <ArrowDownRight size={14} className="mr-0.5" /> Acil İkmal Önerisi
+              <ArrowDownRight size={14} className="mr-0.5" /> Acil İkmal Gerekli
             </span>
           </div>
           <div className="bg-red-500/10 p-3 rounded-lg text-red-400 animate-pulse">
@@ -180,23 +186,25 @@ export default function App() {
           </div>
         </div>
 
-        <div className="bg-slate-800/80 border border-slate-700/60 p-5 rounded-xl flex items-center justify-between">
+        <div className="bg-slate-800/80 border border-purple-500/30 p-5 rounded-xl flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Takip Edilen Mağaza</p>
-            <h3 className="text-2xl font-bold text-white mt-1">4 Lokasyon</h3>
-            <span className="text-slate-400 text-xs mt-1 block">A/B Segment Mağazalar</span>
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Terk Edilen Sepetler</p>
+            <h3 className="text-2xl font-bold text-purple-400 mt-1">{totalAbandonedCarts} Adet</h3>
+            <span className="text-purple-300 text-xs flex items-center mt-1">
+              <ShoppingCart size={14} className="mr-1" /> Potansiyel Talep Riski
+            </span>
           </div>
-          <div className="bg-emerald-500/10 p-3 rounded-lg text-emerald-400">
-            <Store size={24} />
+          <div className="bg-purple-500/10 p-3 rounded-lg text-purple-400">
+            <ShoppingCart size={24} />
           </div>
         </div>
 
         <div className="bg-slate-800/80 border border-orange-500/30 p-5 rounded-xl flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">AI Sipariş Atama Başarısı</p>
-            <h3 className="text-2xl font-bold text-orange-400 mt-1">%96.4</h3>
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Hedef Kitle / RFM</p>
+            <h3 className="text-2xl font-bold text-orange-400 mt-1">FLO Plus</h3>
             <span className="text-emerald-400 text-xs flex items-center mt-1">
-              <Sparkles size={14} className="mr-0.5" /> Otomatik Dağıtım
+              <Users size={14} className="mr-0.5" /> %25+ Retention Artışı
             </span>
           </div>
           <div className="bg-orange-500/10 p-3 rounded-lg text-orange-400">
@@ -235,20 +243,19 @@ export default function App() {
         </div>
       </div>
 
-      {/* Inventory Table with AI Actions */}
+      {/* Inventory & CRM Table */}
       <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-900/80 border-b border-slate-700 text-slate-400 text-xs uppercase tracking-wider">
                 <th className="py-3.5 px-4 font-semibold">Ürün Detayı</th>
-                <th className="py-3.5 px-4 font-semibold">Kategori / Marka</th>
+                <th className="py-3.5 px-4 font-semibold">Kategori & Segment</th>
                 <th className="py-3.5 px-4 font-semibold">Mağaza</th>
-                <th className="py-3.5 px-4 font-semibold text-center">Stok</th>
-                <th className="py-3.5 px-4 font-semibold text-center">Eşik</th>
-                <th className="py-3.5 px-4 font-semibold text-center">AI Tahmini Talep</th>
-                <th className="py-3.5 px-4 font-semibold text-right">Fiyat</th>
-                <th className="py-3.5 px-4 font-semibold text-center">AI Optimizasyon Aksiyonu</th>
+                <th className="py-3.5 px-4 font-semibold text-center">Mevcut Stok</th>
+                <th className="py-3.5 px-4 font-semibold text-center">CRM Sinyalleri</th>
+                <th className="py-3.5 px-4 font-semibold text-center">Tahmini Talep</th>
+                <th className="py-3.5 px-4 font-semibold text-center">İkmal & Dağıtım</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/50 text-sm">
@@ -262,9 +269,11 @@ export default function App() {
                     </td>
                     <td className="py-3 px-4">
                       <span className="inline-block bg-slate-900 text-slate-300 border border-slate-700 rounded px-2 py-0.5 text-xs">
-                        {item.product.brand}
+                        {item.product.brand} • {item.product.category}
                       </span>
-                      <p className="text-xs text-slate-400 mt-1">{item.product.category}</p>
+                      <div className="flex items-center gap-1 text-xs text-orange-400 mt-1">
+                        <Tag size={12} /> RFM: {item.crmMetrics?.rfmSegment}
+                      </div>
                     </td>
                     <td className="py-3 px-4">
                       <p className="text-slate-200">{item.store.storeName}</p>
@@ -274,18 +283,23 @@ export default function App() {
                       <span className={isCritical ? "text-red-400" : "text-emerald-400"}>
                         {item.stockQuantity}
                       </span>
+                      <span className="text-xs text-slate-400 block font-normal">Eşik: {item.criticalThreshold}</span>
                     </td>
-                    <td className="py-3 px-4 text-center text-slate-400 font-mono">
-                      {item.criticalThreshold}
+                    <td className="py-3 px-4 text-center">
+                      <div className="inline-flex flex-col items-center">
+                        <span className="text-xs text-purple-400 font-medium flex items-center gap-1">
+                          <ShoppingCart size={12} /> {item.crmMetrics?.abandonedCarts} Sepet
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {item.crmMetrics?.activeCouponUsers} Aktif Kupon
+                        </span>
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className="inline-flex items-center gap-1 text-slate-200 font-medium bg-slate-900/60 px-2.5 py-1 rounded border border-slate-700">
                         <Sparkles size={12} className="text-orange-400" />
                         {item.predictedDemand} Adet
                       </span>
-                    </td>
-                    <td className="py-3 px-4 text-right font-medium text-slate-200">
-                      {item.product.unitPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                     </td>
                     <td className="py-3 px-4 text-center">
                       {isCritical ? (
@@ -298,7 +312,7 @@ export default function App() {
                         </button>
                       ) : (
                         <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">
-                          <CheckCircle2 size={12} /> Optimum Seviye
+                          <CheckCircle2 size={12} /> Optimum
                         </span>
                       )}
                     </td>
